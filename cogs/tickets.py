@@ -89,3 +89,4 @@ async def setup(bot):
     print("🔁 Cargando el sistema de tickets...")
     await bot.add_cog(TicketSystem(bot))
     print("✅ Sistema de tickets cargado correctamente.")
+    
