@@ -1,4 +1,5 @@
 import os
+import json
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -9,7 +10,17 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 if not TOKEN:
     raise ValueError("El token de Discord no está configurado correctamente en el archivo .env")
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+def load_json(file, default_data=None):
+    try:
+        with open(file, encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return default_data or {}
+
+config = load_json('config.json', {})
+COMMAND_PREFIX = config.get("bot_prefix")
+
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=discord.Intents.all())
 
 def print_bot_banner():
     print("\033[H\033[J", end="")
