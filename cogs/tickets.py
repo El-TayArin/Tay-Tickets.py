@@ -2,6 +2,7 @@ import json
 import asyncio
 import discord
 from discord.ext import commands
+from bot import config
 
 def load_json(file, default_data=None):
     try:
@@ -20,10 +21,9 @@ def save_json(file, data):
 class TicketSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = load_json('config.json', {})
         self.tickets = load_json('tickets.json', {})
-        self.tickets_channel_id = int(self.config.get("ticket_channel_id", 0))
-        self.category_id = int(self.config.get("category_id", 0))
+        self.tickets_channel_id = int(config.get("ticket_channel_id", 0))
+        self.category_id = int(config.get("category_id", 0))
 
     def save_tickets(self):
         save_json('tickets.json', self.tickets)
@@ -89,4 +89,3 @@ async def setup(bot):
     print("🔁 Cargando el sistema de tickets...")
     await bot.add_cog(TicketSystem(bot))
     print("✅ Sistema de tickets cargado correctamente.")
-    
