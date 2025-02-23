@@ -2,5 +2,11 @@
     "bot_prefix": "!",
 
     "ticket_channel_id": "1340810788683911320",
-    "category_id": "1336888703590858804"
+    "category_id": "1336888703590858804",
+
+    "ticket_categories": {
+        "soporte_general": "1336888703590858804",
+        "apelaciones": "1336888703590858804",
+        "compras": "1336888703590858804"
+    }
 }

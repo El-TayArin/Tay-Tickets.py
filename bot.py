@@ -19,6 +19,7 @@ def load_json(file, default_data=None):
 
 config = load_json('config.json', {})
 COMMAND_PREFIX = config.get("bot_prefix")
+TICKET_CATEGORIES = config.get("ticket_categories", {})
 
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=discord.Intents.all())
 

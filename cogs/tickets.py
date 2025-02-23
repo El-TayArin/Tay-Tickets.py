@@ -2,6 +2,7 @@ import asyncio
 import json
 import discord
 from discord.ext import commands
+from discord.ui import Select, View
 
 def load_json(file, default_data=None):
     try:
@@ -17,14 +18,51 @@ def save_json(file, data):
     except (FileNotFoundError, OSError, json.JSONDecodeError) as e:
         print(f"⚠️ Error al guardar {file}: {e}")
 
+class TicketDropdown(Select):
+    def __init__(self, bot, ctx, ticket_categories):
+        self.bot = bot
+        self.ctx = ctx
+        self.ticket_categories = ticket_categories
+        options = [discord.SelectOption(label=cat, value=cat) for cat in ticket_categories.keys()]
+        super().__init__(placeholder="Selecciona una categoría", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        category = self.values[0]
+        guild = self.ctx.guild
+        ticket_name = f"ticket-{self.ctx.author.name}".lower()
+        
+        if ticket_name in self.bot.ticket_system.tickets:
+            await interaction.response.send_message("❌ ¡Ya tienes un ticket abierto! Cierra el anterior antes de abrir uno nuevo.", ephemeral=True)
+            return
+        
+        category_id = int(self.ticket_categories[category])
+        category_obj = discord.utils.get(guild.categories, id=category_id)
+        if not category_obj:
+            await interaction.response.send_message("⚠️ No se ha encontrado la categoría especificada.", ephemeral=True)
+            return
+        
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            self.ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            guild.me: discord.PermissionOverwrite(read_messages=True)
+        }
+        
+        ticket_channel = await guild.create_text_channel(ticket_name, overwrites=overwrites, category=category_obj)
+        self.bot.ticket_system.tickets[ticket_name] = ticket_channel.id
+        self.bot.ticket_system.save_tickets()
+        
+        await ticket_channel.send(f"🎫 ¡Hola {self.ctx.author.mention}! Este es tu ticket de {category}. Un miembro del equipo te atenderá pronto.")
+        await interaction.response.send_message(f"✅ ¡Tu ticket ha sido creado en la categoría '{category}'! Accede a él en: {ticket_channel.mention}", ephemeral=True)
+
 class TicketSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = load_json('config.json', {})
         self.tickets = load_json('tickets.json', {})
         self.tickets_channel_id = int(self.config.get("ticket_channel_id", 0))
-        self.category_id = int(self.config.get("category_id", 0))
-
+        self.ticket_categories = self.config.get("ticket_categories", {})
+        bot.ticket_system = self
+    
     def save_tickets(self):
         save_json('tickets.json', self.tickets)
 
@@ -39,30 +77,9 @@ class TicketSystem(commands.Cog):
         if not self.is_ticket_creation_channel(ctx):
             return
 
-        guild = ctx.guild
-        ticket_name = f"ticket-{ctx.author.name}"
-
-        if ticket_name in self.tickets:
-            await ctx.send("❌ ¡Ya tienes un ticket abierto! Cierra el anterior antes de abrir uno nuevo.")
-            return
-
-        category = discord.utils.get(guild.categories, id=self.category_id)
-        if not category:
-            await ctx.send("⚠️ No se ha encontrado la categoría para los tickets.")
-            return
-
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            guild.me: discord.PermissionOverwrite(read_messages=True)
-        }
-
-        ticket_channel = await guild.create_text_channel(ticket_name, overwrites=overwrites, category=category)
-        self.tickets[ticket_name] = ticket_channel.id
-        self.save_tickets()
-
-        await ticket_channel.send(f"🎫 ¡Hola {ctx.author.mention}! Este es tu ticket. Un miembro del equipo te atenderá pronto.")
-        await ctx.send(f"✅ ¡Tu ticket ha sido creado! Accede a él en: {ticket_channel.mention}")
+        view = View()
+        view.add_item(TicketDropdown(self.bot, ctx, self.ticket_categories))
+        await ctx.send("🎫 ¿De qué categoría será tu ticket?", view=view)
 
     @commands.command(name="close")
     async def close_ticket(self, ctx):
