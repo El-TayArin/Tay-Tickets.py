@@ -1,33 +1,57 @@
 
 # TAY-TICKETS.py
 
-Un bot de tickets de discord creado con la finalidad de aprendizaje de python
+Un bot de tickets de discord creado con la finalidad de aprendizaje de [@TayArin](https://github.com/El-TayArin)
 
 
-## Creador
+## Colaboradores
 
 - [@TayArin](https://github.com/El-TayArin)
+- [@SusoDiz](https://github.com/SusoDiz)
 
 
 ## Características
 
-- Comandos simples
 - Configuracion simple
 - Tickets en categoria
-- Guardado de tickets (por si explota el bot)
+- Logs
 
 
 ## Como usarlo
 
-Al clonar el repositorio, tendras que crear un archivo ".env" en el que añadiras:
+Clona el repositorio:
+```
+git clone https://github.com/El-TayArin/Tay-Tickets.py.git
+```
+
+Instala las dependencias:
+```
+pip -m install -r requirements.txt
+```
+
+Crear un archivo ".env" en el que añadiras:
 ```plaintext # .env
 TOKEN=ElTokenDeTuBotDeDiscord
 ```
 Ademas, debes editar config.json para usar las IDs de tu preferencia:
 ```json
 {
-    "ticket_channel_id": "0000000000000000000",
-    "category_id": "0000000000000000000"
+    "bot_prefix": "!",
+
+    "ticket_channel_id": "1343259655387746355",
+    "ticket_message": "🎫 Presiona el botón para abrir un ticket y seleccionar la categoría.",
+
+    "ticket_categories": {
+        "soporte_general": "1343259614258528357",
+        "apelaciones": "1343259614258528357",
+        "compras": "1343259614258528357"
+    },
+
+    "log_channel_id": "1343259679295541319"
 }
 ```
 
+Ejecuta el bot:
+```
+py .\bot.py
+```

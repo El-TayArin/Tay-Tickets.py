@@ -3,6 +3,7 @@ import json
 import discord
 from discord.ext import commands
 from discord.ui import Select, View, Button
+from cogs.logs import TicketLogs
 
 def load_json(file, default_data=None):
     try:
@@ -52,7 +53,7 @@ class TicketDropdown(Select):
         ticket_channel = await guild.create_text_channel(ticket_name, overwrites=overwrites, category=category_obj)
         self.bot.ticket_system.tickets[ticket_name] = ticket_channel.id
         self.bot.ticket_system.save_tickets()
-        
+        await self.bot.ticket_system.ticket_logs.log_ticket_creation(interaction.user, category, ticket_channel)        
         view = View()
         view.add_item(CloseTicketButton(self.bot, ticket_channel))
         
@@ -83,6 +84,11 @@ class CloseTicketButton(Button):
     async def callback(self, interaction: discord.Interaction):
         embed = discord.Embed(title="🔒 Cerrando Ticket", description="Este ticket se cerrará en 5 segundos...", color=discord.Color.red())
         await interaction.response.send_message(embed=embed, ephemeral=True)
+        ticket_name = self.ticket_channel.name
+        if ticket_name in self.bot.ticket_system.tickets:
+            del self.bot.ticket_system.tickets[ticket_name]
+            self.bot.ticket_system.save_tickets()
+        await self.bot.ticket_system.ticket_logs.log_ticket_closure(interaction.user, self.ticket_channel)
         await asyncio.sleep(5)
         await self.ticket_channel.delete()
 
@@ -94,6 +100,7 @@ class TicketSystem(commands.Cog):
         self.tickets_channel_id = int(self.config.get("ticket_channel_id", 0))
         self.ticket_categories = self.config.get("ticket_categories", {})
         self.ticket_message = self.config.get("ticket_message", "Presiona el botón para abrir un ticket.")
+        self.ticket_logs = TicketLogs(bot)
         bot.ticket_system = self
     
     def save_tickets(self):

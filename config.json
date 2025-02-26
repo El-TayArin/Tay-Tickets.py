@@ -1,12 +1,14 @@
 {
     "bot_prefix": "!",
 
-    "ticket_channel_id": "1343242525997269095",
+    "ticket_channel_id": "1343259655387746355",
     "ticket_message": "🎫 Presiona el botón para abrir un ticket y seleccionar la categoría.",
 
     "ticket_categories": {
-        "soporte_general": "1336888703590858804",
-        "apelaciones": "1336888703590858804",
-        "compras": "1336888703590858804"
-    }
+        "soporte_general": "1343259614258528357",
+        "apelaciones": "1343259614258528357",
+        "compras": "1343259614258528357"
+    },
+
+    "log_channel_id": "1343259679295541319"
 }
