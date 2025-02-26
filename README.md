@@ -1,7 +1,7 @@
 
 # TAY-TICKETS.py
 
-Un bot de tickets de discord creado con la finalidad de aprendizaje de [@TayArin](https://github.com/El-TayArin)
+Un bot de tickets de discord programado en python
 
 
 ## Colaboradores
@@ -13,7 +13,7 @@ Un bot de tickets de discord creado con la finalidad de aprendizaje de [@TayArin
 ## Características
 
 - Configuracion simple
-- Tickets en categoria
+- Tickets por categoria
 - Logs
 
 
