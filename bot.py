@@ -40,7 +40,7 @@ async def load_extensions():
             extension = f'cogs.{filename[:-3]}'
             try:
                 await bot.load_extension(extension)
-            except Exception as e:
+            except ImportError as e:
                 handle_extension_error(extension, e)
 
 def handle_extension_error(extension, error):
