@@ -17,6 +17,12 @@ Un bot de tickets de discord programado en python
 - Logs
 
 
+## Requisitos previos
+
+- Python instalado (Probado en la v3.12)
+- Un bot de Discord registrado y su token 
+
+
 ## Como usarlo
 
 Clona el repositorio:
