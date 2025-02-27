@@ -37,7 +37,7 @@ pip -m install -r requirements.txt
 
 Crear un archivo ".env" en el que añadiras:
 ```plaintext # .env
-TOKEN=ElTokenDeTuBotDeDiscord
+DISCORD_TOKEN=ElTokenDeTuBotDeDiscord
 ```
 Ademas, debes editar config.json para usar las IDs de tu preferencia:
 ```json
