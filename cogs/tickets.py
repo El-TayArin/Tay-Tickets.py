@@ -27,8 +27,8 @@ class TicketDropdown(Select):
         self.bot = bot
         self.interaction = interaction
         self.ticket_categories = ticket_categories
-        options = [discord.SelectOption(label=cat, value=cat)
-                   for cat in ticket_categories.keys()]
+        options = [discord.SelectOption(label=cat_data["display_name"], value=cat)
+                   for cat, cat_data in ticket_categories.items()]
         super().__init__(placeholder="Selecciona una categoría", options=options)
 
     async def callback(self, interaction: discord.Interaction):
@@ -39,13 +39,14 @@ class TicketDropdown(Select):
         if ticket_name in self.bot.ticket_system.tickets:
             embed = discord.Embed(
                 title="❌ Error",
-                description="¡Tienes un ticket abierto! Cierralo antes de abrir uno nuevo.",
+                description="¡Tienes un ticket abierto! Ciérralo antes de abrir uno nuevo.",
                 color=discord.Color.red()
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        category_id = int(self.ticket_categories[category])
+        category_data = self.ticket_categories[category]
+        category_id = int(category_data["category_id"])
         category_obj = discord.utils.get(guild.categories, id=category_id)
         if not category_obj:
             embed = discord.Embed(
@@ -56,11 +57,18 @@ class TicketDropdown(Select):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
+        support_role_id = int(category_data["support_role_id"])
+        support_role = guild.get_role(support_role_id)
+
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=False),
             interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            guild.me: discord.PermissionOverwrite(read_messages=True)
+            guild.me: discord.PermissionOverwrite(read_messages=True),
         }
+
+        if support_role:
+            overwrites[support_role] = discord.PermissionOverwrite(
+                read_messages=True, send_messages=True)
 
         ticket_channel = await guild.create_text_channel(ticket_name, overwrites=overwrites, category=category_obj)
         self.bot.ticket_system.tickets[ticket_name] = ticket_channel.id
@@ -71,14 +79,14 @@ class TicketDropdown(Select):
 
         embed = discord.Embed(
             title="🎫 Ticket Abierto",
-            description=f"Hola {interaction.user.mention}, este es tu ticket de **{category}**. Un miembro del equipo te atenderá pronto.",
+            description=f"Hola {interaction.user.mention}, este es tu ticket de **{category_data['display_name']}**. Un miembro del equipo te atenderá pronto.",
             color=discord.Color.green()
         )
         await ticket_channel.send(embed=embed, view=view)
 
         embed_response = discord.Embed(
             title="✅ Ticket Creado",
-            description=f"Tu ticket ha sido creado en la categoría **{category}**. Accede a él en: {ticket_channel.mention}",
+            description=f"Tu ticket ha sido creado en la categoría **{category_data['display_name']}**. Accede a él en: {ticket_channel.mention}",
             color=discord.Color.green()
         )
         await interaction.response.send_message(embed=embed_response, ephemeral=True)

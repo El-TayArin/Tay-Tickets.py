@@ -5,10 +5,22 @@
     "ticket_message": "🎫 Presiona el botón para abrir un ticket y seleccionar la categoría.",
 
     "ticket_categories": {
-        "soporte_general": "1343259614258528357",
-        "apelaciones": "1343259614258528357",
-        "compras": "1343259614258528357"
+        "soporte_general": {
+            "category_id": "1343259614258528357",
+            "support_role_id": "1344736498829758584",
+            "display_name": "🔧 Soporte General"
+        },
+        "apelaciones": {
+            "category_id": "1343259614258528357",
+            "support_role_id": "1344736498829758584",
+            "display_name": "Apelaciones"
+        },
+        "compras": {
+            "category_id": "1343259614258528357",
+            "support_role_id": "1344736498829758584",
+            "display_name": "Compras"
+        }
     },
 
-    "log_channel_id": "1343259679295541319"
+    "log_channel_id": "1344736498829758584"
 }
