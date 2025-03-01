@@ -2,7 +2,7 @@ import asyncio
 import json
 import discord
 from discord.ext import commands
-from discord.ui import Select, View, Button
+from discord.ui import Select, View, Button, Modal, TextInput
 from cogs.logs import TicketLogs
 
 
@@ -77,6 +77,7 @@ class TicketDropdown(Select):
         view = View()
         view.add_item(CloseTicketButton(self.bot, ticket_channel))
         view.add_item(ClaimTicketButton(self.bot, ticket_channel))
+        view.add_item(AddUserButton(self.bot, ticket_channel))
 
         embed = discord.Embed(
             title="🎫 Ticket Abierto",
@@ -121,7 +122,7 @@ class CloseTicketButton(Button):
                               description="Este ticket se cerrará en 5 segundos...",
                               color=discord.Color.red()
                               )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await self.ticket_channel.send(embed=embed)
         ticket_name = self.ticket_channel.name
         if ticket_name in self.bot.ticket_system.tickets:
             del self.bot.ticket_system.tickets[ticket_name]
@@ -139,39 +140,81 @@ class ClaimTicketButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         ticket_name = self.ticket_channel.name
-        if ticket_name in self.bot.ticket_system.tickets:
-            ticket_data = self.bot.ticket_system.tickets[ticket_name]
-            if ticket_data["claimed_by"] is not None:
-                embed = discord.Embed(
-                    title="❌ Error",
-                    description="Este ticket ya ha sido reclamado.",
-                    color=discord.Color.red()
-                )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
+        ticket_data = self.bot.ticket_system.tickets.get(ticket_name)
 
-            for ticket in self.bot.ticket_system.tickets.values():
-                if ticket["claimed_by"] == interaction.user.id:
-                    embed = discord.Embed(
-                        title="❌ Error",
-                        description="Ya has reclamado otro ticket.",
-                        color=discord.Color.red()
-                    )
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
-                    return
+        if ticket_data is None:
+            await interaction.response.send_message("No se encontró información del ticket.", ephemeral=True)
+            return
 
-            self.bot.ticket_system.tickets[ticket_name]["claimed_by"] = interaction.user.id
+        if ticket_data["claimed_by"] is None:
+            # Reclamar el ticket
+            ticket_data["claimed_by"] = interaction.user.id
             self.bot.ticket_system.save_tickets()
+
+            self.label = "🔓 Liberar Ticket"
+            self.style = discord.ButtonStyle.secondary
 
             embed = discord.Embed(
                 title="👤 Ticket Reclamado",
                 description=f"El ticket ha sido reclamado por {interaction.user.mention}.",
                 color=discord.Color.green()
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
             await self.ticket_channel.send(embed=embed)
 
             await self.bot.ticket_system.ticket_logs.log_ticket_claim(interaction.user, self.ticket_channel)
+        elif ticket_data["claimed_by"] == interaction.user.id:
+            # Liberar el ticket
+            ticket_data["claimed_by"] = None
+            self.bot.ticket_system.save_tickets()
+
+            self.label = "👤 Reclamar Ticket"
+            self.style = discord.ButtonStyle.success
+
+            embed = discord.Embed(
+                title="🔓 Ticket Liberado",
+                description=f"El ticket ha sido liberado por {interaction.user.mention}.",
+                color=discord.Color.yellow()
+            )
+            await self.ticket_channel.send(embed=embed)
+
+            await self.bot.ticket_system.ticket_logs.log_ticket_release(interaction.user, self.ticket_channel)
+        else:
+            await interaction.response.send_message("Este ticket ya ha sido reclamado por otro miembro del staff.", ephemeral=True)
+
+        await interaction.message.edit(view=self.view)
+
+
+class AddUserButton(Button):
+    def __init__(self, bot, ticket_channel):
+        super().__init__(label="➕ Añadir Usuario", style=discord.ButtonStyle.secondary)
+        self.bot = bot
+        self.ticket_channel = ticket_channel
+
+    async def callback(self, interaction: discord.Interaction):
+        if not interaction.user.guild_permissions.manage_channels:
+            await interaction.response.send_message("No tienes permisos para usar este botón.", ephemeral=True)
+            return
+
+        modal = AddUserModal(self.bot, self.ticket_channel)
+        await interaction.response.send_modal(modal)
+
+
+class AddUserModal(Modal):
+    def __init__(self, bot, ticket_channel):
+        super().__init__(title="Añadir Usuario al Ticket")
+        self.bot = bot
+        self.ticket_channel = ticket_channel
+        self.user_id = TextInput(label="ID del Usuario", placeholder="Introduce el ID del usuario")
+        self.add_item(self.user_id)  # Añadir el campo de texto al modal
+
+    async def on_submit(self, interaction: discord.Interaction, /):
+        user_id = int(self.user_id.value)
+        user = interaction.guild.get_member(user_id)
+        if user:
+            await self.ticket_channel.set_permissions(user, read_messages=True, send_messages=True)
+            await interaction.response.send_message(f"{user.mention} ha sido añadido al ticket.")
+        else:
+            await interaction.response.send_message("No se encontró al usuario.", ephemeral=True)
 
 
 class TicketSystem(commands.Cog):

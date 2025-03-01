@@ -80,7 +80,6 @@ class TicketLogs(commands.Cog):
     async def log_ticket_claim(self, user: discord.Member, channel: discord.TextChannel):
         log_channel = self.get_log_channel()
         if log_channel and channel.id in self.tickets:
-            ticket_data = self.tickets[channel.id]
             claimed_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
 
             embed = discord.Embed(title="👤 Ticket Reclamado",
@@ -88,6 +87,19 @@ class TicketLogs(commands.Cog):
             embed.add_field(name="Reclamado por", value=user.mention, inline=True)
             embed.add_field(name="Canal", value=channel.mention, inline=False)
             embed.add_field(name="Fecha de Reclamo", value=claimed_at, inline=False)
+            embed.set_footer(text=f"Ticket ID: {channel.id}")
+            await log_channel.send(embed=embed)
+
+    async def log_ticket_release(self, user: discord.Member, channel: discord.TextChannel):
+        log_channel = self.get_log_channel()
+        if log_channel and channel.id in self.tickets:
+            released_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
+
+            embed = discord.Embed(title="🔓 Ticket Liberado",
+                                  color=discord.Color.orange())
+            embed.add_field(name="Liberado por", value=user.mention, inline=True)
+            embed.add_field(name="Canal", value=channel.mention, inline=False)
+            embed.add_field(name="Fecha de Liberación", value=released_at, inline=False)
             embed.set_footer(text=f"Ticket ID: {channel.id}")
             await log_channel.send(embed=embed)
 
