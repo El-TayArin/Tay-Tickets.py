@@ -66,11 +66,14 @@ class TicketLogs(commands.Cog):
                 name="Abierto por",
                 value=opened_by.mention if opened_by else "Desconocido",
                 inline=True
-                )
-            embed.add_field(name="Cerrado por", value=user.mention, inline=True)
+            )
+            embed.add_field(name="Cerrado por",
+                            value=user.mention, inline=True)
             embed.add_field(name="Categoría", value=category, inline=False)
-            embed.add_field(name="Fecha de Apertura", value=opened_at, inline=False)
-            embed.add_field(name="Fecha de Cierre", value=closed_at, inline=False)
+            embed.add_field(name="Fecha de Apertura",
+                            value=opened_at, inline=False)
+            embed.add_field(name="Fecha de Cierre",
+                            value=closed_at, inline=False)
             embed.set_footer(text=f"Ticket ID: {channel.id}")
             await log_channel.send(embed=embed)
 
@@ -84,9 +87,11 @@ class TicketLogs(commands.Cog):
 
             embed = discord.Embed(title="👤 Ticket Reclamado",
                                   color=discord.Color.yellow())
-            embed.add_field(name="Reclamado por", value=user.mention, inline=True)
+            embed.add_field(name="Reclamado por",
+                            value=user.mention, inline=True)
             embed.add_field(name="Canal", value=channel.mention, inline=False)
-            embed.add_field(name="Fecha de Reclamo", value=claimed_at, inline=False)
+            embed.add_field(name="Fecha de Reclamo",
+                            value=claimed_at, inline=False)
             embed.set_footer(text=f"Ticket ID: {channel.id}")
             await log_channel.send(embed=embed)
 
@@ -97,9 +102,11 @@ class TicketLogs(commands.Cog):
 
             embed = discord.Embed(title="🔓 Ticket Liberado",
                                   color=discord.Color.orange())
-            embed.add_field(name="Liberado por", value=user.mention, inline=True)
+            embed.add_field(name="Liberado por",
+                            value=user.mention, inline=True)
             embed.add_field(name="Canal", value=channel.mention, inline=False)
-            embed.add_field(name="Fecha de Liberación", value=released_at, inline=False)
+            embed.add_field(name="Fecha de Liberación",
+                            value=released_at, inline=False)
             embed.set_footer(text=f"Ticket ID: {channel.id}")
             await log_channel.send(embed=embed)
 

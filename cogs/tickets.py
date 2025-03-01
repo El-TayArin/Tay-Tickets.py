@@ -71,7 +71,8 @@ class TicketDropdown(Select):
                 read_messages=True, send_messages=True)
 
         ticket_channel = await guild.create_text_channel(ticket_name, overwrites=overwrites, category=category_obj)
-        self.bot.ticket_system.tickets[ticket_name] = {"channel_id": ticket_channel.id, "claimed_by": None}
+        self.bot.ticket_system.tickets[ticket_name] = {
+            "channel_id": ticket_channel.id, "claimed_by": None}
         self.bot.ticket_system.save_tickets()
         await self.bot.ticket_system.ticket_logs.log_ticket_creation(interaction.user, category, ticket_channel)
         view = View()
@@ -204,7 +205,8 @@ class AddUserModal(Modal):
         super().__init__(title="Añadir Usuario al Ticket")
         self.bot = bot
         self.ticket_channel = ticket_channel
-        self.user_id = TextInput(label="ID del Usuario", placeholder="Introduce el ID del usuario")
+        self.user_id = TextInput(
+            label="ID del Usuario", placeholder="Introduce el ID del usuario")
         self.add_item(self.user_id)  # Añadir el campo de texto al modal
 
     async def on_submit(self, interaction: discord.Interaction, /):

@@ -8,7 +8,9 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 if not TOKEN:
-    raise ValueError("El token de Discord no está configurado correctamente en el archivo .env")
+    raise ValueError(
+        "El token de Discord no está configurado correctamente en el archivo .env")
+
 
 def load_json(file, default_data=None):
     try:
@@ -17,11 +19,14 @@ def load_json(file, default_data=None):
     except (FileNotFoundError, json.JSONDecodeError):
         return default_data or {}
 
+
 config = load_json('config.json', {})
 COMMAND_PREFIX = config.get("bot_prefix")
 TICKET_CATEGORIES = config.get("ticket_categories", {})
 
-bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=discord.Intents.all())
+bot = commands.Bot(command_prefix=COMMAND_PREFIX,
+                   intents=discord.Intents.all())
+
 
 def print_bot_banner():
     print("\033[H\033[J", end="")
@@ -34,6 +39,7 @@ def print_bot_banner():
         "\033[1;35m   ╚═╝   ╚═╝  ╚═╝   ╚═╝        ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝╚═╝        ╚═╝   \033[0m"
     )
 
+
 async def load_extensions():
     for filename in os.listdir('./cogs'):
         if filename.endswith('.py'):
@@ -43,6 +49,7 @@ async def load_extensions():
             except ImportError as e:
                 handle_extension_error(extension, e)
 
+
 def handle_extension_error(extension, error):
     error_messages = {
         commands.ExtensionNotFound: f"La extensión '{extension}' no se encontró.",
@@ -50,7 +57,9 @@ def handle_extension_error(extension, error):
         commands.NoEntryPointError: f"La extensión '{extension}' no tiene un punto de entrada 'setup'.",
         commands.ExtensionFailed: f"La extensión '{extension}' falló al cargar. {error.original}",
     }
-    print(error_messages.get(type(error), f"Error al cargar la extensión '{extension}': {error}"))
+    print(error_messages.get(type(error),
+          f"Error al cargar la extensión '{extension}': {error}"))
+
 
 @bot.event
 async def on_ready():
