@@ -42,6 +42,7 @@ DISCORD_TOKEN=ElTokenDeTuBotDeDiscord
 Ademas, debes editar config.json para usar las IDs de tu preferencia:
 ```json
 {
+    "language": "ES_es",
     "bot_prefix": "!",
 
     "ticket_channel_id": "1343259655387746355",
