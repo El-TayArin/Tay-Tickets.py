@@ -71,11 +71,12 @@ class TicketDropdown(Select):
                 read_messages=True, send_messages=True)
 
         ticket_channel = await guild.create_text_channel(ticket_name, overwrites=overwrites, category=category_obj)
-        self.bot.ticket_system.tickets[ticket_name] = ticket_channel.id
+        self.bot.ticket_system.tickets[ticket_name] = {"channel_id": ticket_channel.id, "claimed_by": None}
         self.bot.ticket_system.save_tickets()
         await self.bot.ticket_system.ticket_logs.log_ticket_creation(interaction.user, category, ticket_channel)
         view = View()
         view.add_item(CloseTicketButton(self.bot, ticket_channel))
+        view.add_item(ClaimTicketButton(self.bot, ticket_channel))
 
         embed = discord.Embed(
             title="🎫 Ticket Abierto",
@@ -128,6 +129,49 @@ class CloseTicketButton(Button):
         await self.bot.ticket_system.ticket_logs.log_ticket_closure(interaction.user, self.ticket_channel)
         await asyncio.sleep(5)
         await self.ticket_channel.delete()
+
+
+class ClaimTicketButton(Button):
+    def __init__(self, bot, ticket_channel):
+        super().__init__(label="👤 Reclamar Ticket", style=discord.ButtonStyle.success)
+        self.bot = bot
+        self.ticket_channel = ticket_channel
+
+    async def callback(self, interaction: discord.Interaction):
+        ticket_name = self.ticket_channel.name
+        if ticket_name in self.bot.ticket_system.tickets:
+            ticket_data = self.bot.ticket_system.tickets[ticket_name]
+            if ticket_data["claimed_by"] is not None:
+                embed = discord.Embed(
+                    title="❌ Error",
+                    description="Este ticket ya ha sido reclamado.",
+                    color=discord.Color.red()
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+
+            for ticket in self.bot.ticket_system.tickets.values():
+                if ticket["claimed_by"] == interaction.user.id:
+                    embed = discord.Embed(
+                        title="❌ Error",
+                        description="Ya has reclamado otro ticket.",
+                        color=discord.Color.red()
+                    )
+                    await interaction.response.send_message(embed=embed, ephemeral=True)
+                    return
+
+            self.bot.ticket_system.tickets[ticket_name]["claimed_by"] = interaction.user.id
+            self.bot.ticket_system.save_tickets()
+
+            embed = discord.Embed(
+                title="👤 Ticket Reclamado",
+                description=f"El ticket ha sido reclamado por {interaction.user.mention}.",
+                color=discord.Color.green()
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await self.ticket_channel.send(embed=embed)
+
+            await self.bot.ticket_system.ticket_logs.log_ticket_claim(interaction.user, self.ticket_channel)
 
 
 class TicketSystem(commands.Cog):
