@@ -22,10 +22,14 @@ def load_json(file, default_data=None):
 
 config = load_json('config.json', {})
 COMMAND_PREFIX = config.get("bot_prefix")
+LANGUAGE = config.get("language", "ES_es")
 TICKET_CATEGORIES = config.get("ticket_categories", {})
 
 bot = commands.Bot(command_prefix=COMMAND_PREFIX,
                    intents=discord.Intents.all())
+
+lang_file = f'lang/{LANGUAGE}.json'
+bot.lang = load_json(lang_file, load_json('lang/ES_es.json'))
 
 
 def print_bot_banner():

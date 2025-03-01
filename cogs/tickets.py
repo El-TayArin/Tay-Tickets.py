@@ -29,7 +29,8 @@ class TicketDropdown(Select):
         self.ticket_categories = ticket_categories
         options = [discord.SelectOption(label=cat_data["display_name"], value=cat)
                    for cat, cat_data in ticket_categories.items()]
-        super().__init__(placeholder="Selecciona una categoría", options=options)
+        super().__init__(
+            placeholder=self.bot.lang["category_selection_description"], options=options)
 
     async def callback(self, interaction: discord.Interaction):
         category = self.values[0]
@@ -38,8 +39,8 @@ class TicketDropdown(Select):
 
         if ticket_name in self.bot.ticket_system.tickets:
             embed = discord.Embed(
-                title="❌ Error",
-                description="¡Tienes un ticket abierto! Ciérralo antes de abrir uno nuevo.",
+                title=self.bot.lang["ticket_error_title"],
+                description=self.bot.lang["ticket_already_open_error"],
                 color=discord.Color.red()
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -50,8 +51,8 @@ class TicketDropdown(Select):
         category_obj = discord.utils.get(guild.categories, id=category_id)
         if not category_obj:
             embed = discord.Embed(
-                title="⚠️ Error",
-                description="No se ha encontrado la categoría especificada.",
+                title=self.bot.lang["ticket_error_title"],
+                description=self.bot.lang["category_not_found_error"],
                 color=discord.Color.orange()
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -81,15 +82,17 @@ class TicketDropdown(Select):
         view.add_item(AddUserButton(self.bot, ticket_channel))
 
         embed = discord.Embed(
-            title="🎫 Ticket Abierto",
-            description=f"Hola {interaction.user.mention}, este es tu ticket de **{category_data['display_name']}**. Un miembro del equipo te atenderá pronto.",
+            title=self.bot.lang["ticket_opened_title"],
+            description=self.bot.lang["ticket_opened"].format(
+                user_mention=interaction.user.mention, category_display_name=category_data['display_name']),
             color=discord.Color.green()
         )
         await ticket_channel.send(embed=embed, view=view)
 
         embed_response = discord.Embed(
-            title="✅ Ticket Creado",
-            description=f"Tu ticket ha sido creado en la categoría **{category_data['display_name']}**. Accede a él en: {ticket_channel.mention}",
+            title=self.bot.lang["ticket_created_title"],
+            description=self.bot.lang["ticket_created"].format(
+                category_display_name=category_data['display_name'], ticket_channel_mention=ticket_channel.mention),
             color=discord.Color.green()
         )
         await interaction.response.send_message(embed=embed_response, ephemeral=True)
@@ -97,7 +100,8 @@ class TicketDropdown(Select):
 
 class TicketButton(Button):
     def __init__(self, bot, ticket_categories):
-        super().__init__(label="🎫 Abrir Ticket", style=discord.ButtonStyle.primary)
+        super().__init__(
+            label=bot.lang["buttons"]["open_ticket"], style=discord.ButtonStyle.primary)
         self.bot = bot
         self.ticket_categories = ticket_categories
 
@@ -105,8 +109,8 @@ class TicketButton(Button):
         view = View()
         view.add_item(TicketDropdown(
             self.bot, interaction, self.ticket_categories))
-        embed = discord.Embed(title="🎫 Selección de Categoría",
-                              description="Selecciona una categoría para tu ticket en el menú desplegable.",
+        embed = discord.Embed(title=self.bot.lang["category_selection_title"],
+                              description=self.bot.lang["category_selection_description"],
                               color=discord.Color.blue()
                               )
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
@@ -114,13 +118,14 @@ class TicketButton(Button):
 
 class CloseTicketButton(Button):
     def __init__(self, bot, ticket_channel):
-        super().__init__(label="❌ Cerrar Ticket", style=discord.ButtonStyle.danger)
+        super().__init__(
+            label=bot.lang["buttons"]["close_ticket"], style=discord.ButtonStyle.danger)
         self.bot = bot
         self.ticket_channel = ticket_channel
 
     async def callback(self, interaction: discord.Interaction):
-        embed = discord.Embed(title="🔒 Cerrando Ticket",
-                              description="Este ticket se cerrará en 5 segundos...",
+        embed = discord.Embed(title=self.bot.lang["close_ticket"],
+                              description=self.bot.lang["close_ticket_description"],
                               color=discord.Color.red()
                               )
         await self.ticket_channel.send(embed=embed)
@@ -135,7 +140,8 @@ class CloseTicketButton(Button):
 
 class ClaimTicketButton(Button):
     def __init__(self, bot, ticket_channel):
-        super().__init__(label="👤 Reclamar Ticket", style=discord.ButtonStyle.success)
+        super().__init__(
+            label=bot.lang["buttons"]["claim_ticket"], style=discord.ButtonStyle.success)
         self.bot = bot
         self.ticket_channel = ticket_channel
 
@@ -148,52 +154,54 @@ class ClaimTicketButton(Button):
             return
 
         if ticket_data["claimed_by"] is None:
-            # Reclamar el ticket
             ticket_data["claimed_by"] = interaction.user.id
             self.bot.ticket_system.save_tickets()
 
-            self.label = "🔓 Liberar Ticket"
+            self.label = self.bot.lang["buttons"]["release_ticket"]
             self.style = discord.ButtonStyle.secondary
 
             embed = discord.Embed(
-                title="👤 Ticket Reclamado",
-                description=f"El ticket ha sido reclamado por {interaction.user.mention}.",
+                title=self.bot.lang["ticket_claimed_title"],
+                description=self.bot.lang["ticket_claimed"].format(
+                    user_mention=interaction.user.mention),
                 color=discord.Color.green()
             )
             await self.ticket_channel.send(embed=embed)
 
             await self.bot.ticket_system.ticket_logs.log_ticket_claim(interaction.user, self.ticket_channel)
+
         elif ticket_data["claimed_by"] == interaction.user.id:
-            # Liberar el ticket
             ticket_data["claimed_by"] = None
             self.bot.ticket_system.save_tickets()
 
-            self.label = "👤 Reclamar Ticket"
+            self.label = self.bot.lang["buttons"]["claim_ticket"]
             self.style = discord.ButtonStyle.success
 
             embed = discord.Embed(
-                title="🔓 Ticket Liberado",
-                description=f"El ticket ha sido liberado por {interaction.user.mention}.",
+                title=self.bot.lang["ticket_released_title"],
+                description=self.bot.lang["ticket_released"].format(
+                    user_mention=interaction.user.mention),
                 color=discord.Color.yellow()
             )
             await self.ticket_channel.send(embed=embed)
 
             await self.bot.ticket_system.ticket_logs.log_ticket_release(interaction.user, self.ticket_channel)
         else:
-            await interaction.response.send_message("Este ticket ya ha sido reclamado por otro miembro del staff.", ephemeral=True)
+            await interaction.response.send_message(self.bot.lang["ticket_already_claimed"], ephemeral=True)
 
         await interaction.message.edit(view=self.view)
 
 
 class AddUserButton(Button):
     def __init__(self, bot, ticket_channel):
-        super().__init__(label="➕ Añadir Usuario", style=discord.ButtonStyle.secondary)
+        super().__init__(
+            label=bot.lang["buttons"]["add_user"], style=discord.ButtonStyle.secondary)
         self.bot = bot
         self.ticket_channel = ticket_channel
 
     async def callback(self, interaction: discord.Interaction):
         if not interaction.user.guild_permissions.manage_channels:
-            await interaction.response.send_message("No tienes permisos para usar este botón.", ephemeral=True)
+            await interaction.response.send_message(self.bot.lang["no_permission"], ephemeral=True)
             return
 
         modal = AddUserModal(self.bot, self.ticket_channel)
@@ -202,21 +210,21 @@ class AddUserButton(Button):
 
 class AddUserModal(Modal):
     def __init__(self, bot, ticket_channel):
-        super().__init__(title="Añadir Usuario al Ticket")
         self.bot = bot
+        super().__init__(title=self.bot.lang["user_add_modal_title"])
         self.ticket_channel = ticket_channel
         self.user_id = TextInput(
-            label="ID del Usuario", placeholder="Introduce el ID del usuario")
-        self.add_item(self.user_id)  # Añadir el campo de texto al modal
+            label=self.bot.lang["user_add_modal_label"], placeholder=self.bot.lang["user_add_modal_placeholder"])
+        self.add_item(self.user_id)
 
     async def on_submit(self, interaction: discord.Interaction, /):
         user_id = int(self.user_id.value)
         user = interaction.guild.get_member(user_id)
         if user:
             await self.ticket_channel.set_permissions(user, read_messages=True, send_messages=True)
-            await interaction.response.send_message(f"{user.mention} ha sido añadido al ticket.")
+            await interaction.response.send_message(self.bot.lang["user_added"].format(user_mention=user.mention))
         else:
-            await interaction.response.send_message("No se encontró al usuario.", ephemeral=True)
+            await interaction.response.send_message(self.bot.lang["user_not_found"], ephemeral=True)
 
 
 class TicketSystem(commands.Cog):
@@ -241,23 +249,23 @@ class TicketSystem(commands.Cog):
             await channel.purge(limit=10)
             view = View()
             view.add_item(TicketButton(self.bot, self.ticket_categories))
-            embed = discord.Embed(title="🎫 Sistema de Tickets",
-                                  description=self.ticket_message, color=discord.Color.blue())
+            embed = discord.Embed(title=self.bot.lang["ticket_system_title"],
+                                  description=self.bot.lang["ticket_system_description"], color=discord.Color.blue())
             await channel.send(embed=embed, view=view)
 
     @commands.command(name="setup_tickets")
     async def setup_tickets(self, ctx):
         if ctx.author.guild_permissions.administrator:
             await self.send_ticket_message()
-            embed = discord.Embed(title="✅ Configuración Completa",
-                                  description="Mensaje de tickets enviado correctamente.",
+            embed = discord.Embed(title=self.bot.lang["setup_complete_title"],
+                                  description=self.bot.lang["setup_complete"],
                                   color=discord.Color.green()
                                   )
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
-                title="❌ Error",
-                description="No tienes permisos para ejecutar este comando.",
+                title=self.bot.lang["setup_perms_error_title"],
+                description=self.bot.lang["setup_perms_error"],
                 color=discord.Color.red()
             )
             await ctx.send(embed=embed)
